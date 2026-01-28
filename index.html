@@ -1,1 +1,145 @@
-<h1>Hello World</h1>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GOLD LIVE PRO - Fixed Scale</title>
+    <style>
+        :root { --gold: #ffd700; --bg: #000; --buy: #ff4d4d; --sell: #00e676; }
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Tahoma', sans-serif; margin: 0; padding: 0; 
+            background-color: var(--bg); color: white; 
+            height: 100svh; width: 100vw; overflow: hidden;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .top-bar { 
+            padding: 10px 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+            background: #000;
+        }
+        .brand-section { display: flex; align-items: center; gap: 10px; }
+        .header-title { color: var(--gold); font-size: 0.9rem; font-weight: bold; margin: 0; line-height: 1.2; }
+        .live-prices { display: flex; gap: 10px; font-weight: 900; font-size: 1.1rem; }
+        .p-buy { color: var(--buy); }
+        .p-sell { color: var(--sell); }
+        .p-label { font-size: 0.6rem; color: #888; font-weight: normal; margin-right: 2px; }
+
+        .status-bar { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #444; }
+        select { background: #111; border: 1px solid #333; color: var(--gold); border-radius: 4px; font-size: 0.7rem; }
+
+        .charts-container {
+            display: flex;
+            flex-direction: column; 
+            gap: 4px;
+            padding: 0 5px;
+            overflow: hidden;
+        }
+
+        /* ปรับสัดส่วนเพื่อให้ตัวเลขขวามือมีที่ว่าง */
+        .chart-main { flex: 3.5; border-radius: 8px; overflow: hidden; border: 1px solid #222; }
+        .chart-sub { flex: 1; border-radius: 8px; overflow: hidden; border: 1px solid #222; margin-bottom: 5px; }
+
+        .footer { text-align: center; font-size: 0.5rem; color: #222; padding: 4px 0; padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body>
+
+<header class="top-bar">
+    <div class="brand-section">
+        <h1 class="header-title">GOLD<br>LIVE PRO</h1>
+        <div class="live-prices">
+            <div class="p-buy"><span class="p-label">BUY:</span><span id="buyPrice">---</span></div>
+            <div class="p-sell"><span class="p-label">SELL:</span><span id="sellPrice">---</span></div>
+        </div>
+    </div>
+    <div class="status-bar">
+        <select id="refreshInterval" onchange="updateRefreshRate()">
+            <option value="15">15s</option>
+            <option value="30">30s</option>
+            <option value="60" selected>60s</option>
+            <option value="90">90s</option>
+            <option value="120">120s</option>
+        </select>
+        <span id="updateTime">--:--:--</span>
+    </div>
+</header>
+
+<main class="charts-container">
+    <div class="chart-main">
+        <div id="tradingview_gold" style="height:100%;width:100%"></div>
+    </div>
+    <div class="chart-sub">
+        <div id="tradingview_forex" style="height:100%;width:100%"></div>
+    </div>
+</main>
+
+<footer class="footer">SYNO DS920+ • @KoeConbot</footer>
+
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<script type="text/javascript">
+    // แก้ไขพารามิเตอร์เพื่อให้ตัวเลขราคาอยู่ด้านในกรอบ (Price Scale Inside)
+    new TradingView.widget({
+        "autosize": true, 
+        "symbol": "FX_IDC:XAUUSD", 
+        "interval": "60", 
+        "timezone": "Asia/Bangkok",
+        "theme": "dark", 
+        "style": "1", 
+        "locale": "th", 
+        "hide_legend": false,
+        "withdateranges": true,
+        "studies": ["MACD@tv-basicstudies"], 
+        "container_id": "tradingview_gold",
+        "overrides": {
+            "mainSeriesProperties.priceAxisProperties.autoScale": true,
+            "scalesProperties.fontSize": 12
+        }
+    });
+
+    new TradingView.widget({
+        "autosize": true, 
+        "symbol": "OANDA:USDTHB", 
+        "interval": "60", 
+        "timezone": "Asia/Bangkok",
+        "theme": "dark", 
+        "style": "3", 
+        "locale": "th", 
+        "hide_top_toolbar": true, 
+        "hide_legend": true, 
+        "container_id": "tradingview_forex"
+    });
+
+    let refreshTimer;
+    const n8nBase = "https://fierily-unelated-rosamaria.ngrok-free.dev";
+
+    async function fetchData() {
+        try {
+            const goldRes = await fetch(`${n8nBase}/webhook/gold-price`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+            const goldData = await goldRes.json();
+            const gold = Array.isArray(goldData) ? goldData[0] : goldData;
+            document.getElementById('buyPrice').innerText = gold.Buy || gold.Buy965;
+            document.getElementById('sellPrice').innerText = gold.Sell || gold.Sell965;
+            document.getElementById('updateTime').innerText = new Date().toLocaleTimeString('th-TH');
+        } catch (e) { document.getElementById('updateTime').innerText = "ERR"; }
+    }
+
+    function updateRefreshRate() {
+        const s = document.getElementById('refreshInterval').value;
+        localStorage.setItem('goldFinalFixedRate', s);
+        clearInterval(refreshTimer);
+        refreshTimer = setInterval(fetchData, s * 1000);
+    }
+
+    const savedRate = localStorage.getItem('goldFinalFixedRate') || "60";
+    document.getElementById('refreshInterval').value = savedRate;
+    fetchData();
+    refreshTimer = setInterval(fetchData, savedRate * 1000);
+</script>
+
+</body>
+</html>
