@@ -3,30 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GOLD LIVE PRO - Sync Fixed</title>
+    <title>GOLD LIVE PRO - Layout Fixed</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --buy: #ff4d4d; --sell: #00e676; --usd: #4da3ff; }
         * { box-sizing: border-box; }
         body { 
             font-family: 'Tahoma', sans-serif; margin: 0; padding: 0; 
             background-color: var(--bg); color: white; 
-            height: 100svh; width: 100vw; overflow: hidden;
-            display: grid; grid-template-rows: auto 1fr auto;
+            height: 100vh; height: 100svh; width: 100vw; overflow: hidden;
+            display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
         }
-        .top-bar { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; background: #000; }
-        .brand-section { display: flex; align-items: center; gap: 10px; }
-        .header-title { color: var(--gold); font-size: 0.9rem; font-weight: bold; margin: 0; line-height: 1.2; }
-        .live-data-group { display: flex; align-items: center; gap: 10px; }
-        .live-prices { display: flex; gap: 8px; font-weight: 900; font-size: 1.1rem; }
-        .forex-mini { display: flex; align-items: center; gap: 3px; border-left: 1px solid #333; padding-left: 8px; }
-        .p-buy { color: var(--buy); } .p-sell { color: var(--sell); } 
-        .fx-val { color: var(--usd); font-weight: 800; font-size: 1rem; }
-        .p-label { font-size: 0.6rem; color: #888; font-weight: normal; margin-right: 2px; }
-        .status-bar { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #444; }
-        select { background: #111; border: 1px solid #333; color: var(--gold); border-radius: 4px; font-size: 0.7rem; }
-        .chart-main { flex: 1; border-radius: 8px; overflow: hidden; border: 1px solid #222; margin: 0 5px 5px 5px; }
-        .footer { text-align: center; font-size: 0.5rem; color: #222; padding: 4px 0; padding-bottom: env(safe-area-inset-bottom); }
+        /* ปรับ Top Bar ให้รองรับตัวเลขขนาดใหญ่ขึ้น */
+        .top-bar { 
+            padding: 8px 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #000;
+            border-bottom: 1px solid #222;
+        }
+        .brand-section { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .header-title { color: var(--gold); font-size: 0.8rem; font-weight: bold; margin: 0; line-height: 1.1; white-space: nowrap; }
+        
+        /* จัดการกลุ่มตัวเลขไม่ให้ซ้อนกัน */
+        .live-data-group { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+        .live-prices { display: flex; gap: 10px; font-weight: 900; font-size: 1.2rem; }
+        .forex-mini { 
+            display: flex; 
+            align-items: center; 
+            gap: 2px; 
+            border-left: 1px solid #333; 
+            padding-left: 8px; 
+        }
+        
+        .p-buy { color: var(--buy); white-space: nowrap; } 
+        .p-sell { color: var(--sell); white-space: nowrap; } 
+        .fx-val { color: var(--usd); font-weight: 800; font-size: 1.1rem; min-width: 50px; }
+        .p-label { font-size: 0.65rem; color: #888; font-weight: normal; margin-right: 2px; }
+        
+        .status-bar { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #666; }
+        select { background: #111; border: 1px solid #333; color: var(--gold); border-radius: 4px; font-size: 0.75rem; padding: 2px; }
+        
+        /* ปรับพื้นที่กราฟให้เต็มหน้าจอที่สุด */
+        .chart-container { 
+            flex: 1; 
+            position: relative;
+            margin: 5px;
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .footer { text-align: center; font-size: 0.5rem; color: #333; padding: 4px 0; padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body>
@@ -35,11 +64,10 @@
         <h1 class="header-title">GOLD<br>LIVE PRO</h1>
         <div class="live-data-group">
             <div class="live-prices">
-                <div class="p-buy"><span class="p-label">B:</span><span id="buyPrice">---</span></div>
-                <div class="p-sell"><span class="p-label">S:</span><span id="sellPrice">---</span></div>
+                <div class="p-buy"><span class="p-label">B:</span><span id="buyPrice">7x,xxx</span></div>
+                <div class="p-sell"><span class="p-label">S:</span><span id="sellPrice">7x,xxx</span></div>
             </div>
             <div class="forex-mini">
-                <span class="p-label" style="color:var(--usd)">USD:</span>
                 <span id="usdThbPrice" class="fx-val">--.--</span>
             </div>
         </div>
@@ -55,22 +83,30 @@
         <span id="updateTime">--:--:--</span>
     </div>
 </header>
-<main style="display:flex; flex-direction:column; overflow:hidden;">
-    <div class="chart-main">
-        <div id="tradingview_gold" style="height:100%;width:100%"></div>
-    </div>
+
+<main class="chart-container">
+    <div id="tradingview_gold" style="height:100%; width:100%;"></div>
 </main>
+
 <footer class="footer">SYNO DS920+ • @KoeConbot</footer>
 
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script type="text/javascript">
     new TradingView.widget({
-        "autosize": true, "symbol": "FX_IDC:XAUUSD", "interval": "60", "timezone": "Asia/Bangkok",
-        "theme": "dark", "style": "1", "locale": "th", "container_id": "tradingview_gold"
+        "autosize": true,
+        "symbol": "FX_IDC:XAUUSD",
+        "interval": "60",
+        "timezone": "Asia/Bangkok",
+        "theme": "dark",
+        "style": "1",
+        "locale": "th",
+        "container_id": "tradingview_gold",
+        "hide_side_toolbar": true,
+        "allow_symbol_change": false,
+        "save_image": false
     });
 
     let refreshTimer;
-    // URL ngrok จาก n8n ของคุณ
     const n8nBase = "https://fierily-unelated-rosamaria.ngrok-free.dev"; 
 
     async function updateAll() {
@@ -79,30 +115,25 @@
                 headers: { 'ngrok-skip-browser-warning': 'true' } 
             });
             const data = await res.json();
-            
-            // เข้าถึงไอเทมแรกจาก n8n (รองรับทั้งแบบ Array และ Object)
             const item = Array.isArray(data) ? data[0] : data;
             
             if (item) {
-                // อัปเดตราคาทอง และล้างเครื่องหมายสัญลักษณ์ออก
-                const cleanBuy = item.Buy ? item.Buy.toString().replace(/[=,]/g, '') : "---";
-                const cleanSell = item.Sell ? item.Sell.toString().replace(/[=,]/g, '') : "---";
-                
-                document.getElementById('buyPrice').innerText = cleanBuy;
-                document.getElementById('sellPrice').innerText = cleanSell;
-                
-                // ดึงค่า USDTHB (31.14) จาก n8n โดยตรง
-                // ใช้การดึงชื่อตัวแปรที่ตรงกับใน n8n
-                const forexVal = item.USDTHB || item.usdthb || "--.--";
-                document.getElementById('usdThbPrice').innerText = forexVal;
+                // จัดรูปแบบตัวเลขให้มีคอมม่า (,) เพื่อให้อ่านง่ายและไม่หลุดขอบ
+                const formatNum = (num) => {
+                    const clean = num.toString().replace(/[=,]/g, '');
+                    return isNaN(clean) ? "---" : Number(clean).toLocaleString();
+                };
+
+                document.getElementById('buyPrice').innerText = formatNum(item.Buy);
+                document.getElementById('sellPrice').innerText = formatNum(item.Sell);
+                document.getElementById('usdThbPrice').innerText = (item.USDTHB || "--.--");
                 
                 document.getElementById('updateTime').innerText = new Date().toLocaleTimeString('th-TH');
-                document.getElementById('updateTime').style.color = "#888";
+                document.getElementById('updateTime').style.color = "#666";
             }
         } catch (e) { 
             document.getElementById('updateTime').innerText = "OFFLINE";
             document.getElementById('updateTime').style.color = "#ff4d4d";
-            console.error("Fetch Error:", e);
         }
     }
 
