@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GOLD LIVE PRO - Layout Fixed</title>
+    <title>GOLD LIVE PRO - MACD Edition</title>
     <style>
         :root { --gold: #ffd700; --bg: #000; --buy: #ff4d4d; --sell: #00e676; --usd: #4da3ff; }
         * { box-sizing: border-box; }
@@ -14,54 +14,43 @@
             display: flex; flex-direction: column;
             padding-top: env(safe-area-inset-top);
         }
-        /* ปรับ Top Bar ให้รองรับตัวเลขขนาดใหญ่ขึ้น */
         .top-bar { 
-            padding: 8px 12px; 
+            padding: 6px 10px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             background: #000;
             border-bottom: 1px solid #222;
         }
-        .brand-section { display: flex; align-items: center; gap: 8px; flex: 1; }
-        .header-title { color: var(--gold); font-size: 0.8rem; font-weight: bold; margin: 0; line-height: 1.1; white-space: nowrap; }
+        .brand-section { display: flex; align-items: center; gap: 6px; flex: 1; overflow: hidden; }
+        .header-title { color: var(--gold); font-size: 0.75rem; font-weight: bold; margin: 0; line-height: 1; white-space: nowrap; }
         
-        /* จัดการกลุ่มตัวเลขไม่ให้ซ้อนกัน */
-        .live-data-group { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
-        .live-prices { display: flex; gap: 10px; font-weight: 900; font-size: 1.2rem; }
-        .forex-mini { 
-            display: flex; 
-            align-items: center; 
-            gap: 2px; 
-            border-left: 1px solid #333; 
-            padding-left: 8px; 
-        }
+        .live-data-group { display: flex; align-items: center; gap: 8px; }
+        .live-prices { display: flex; gap: 8px; font-weight: 900; font-size: 1.1rem; }
+        .forex-mini { border-left: 1px solid #333; padding-left: 8px; }
         
         .p-buy { color: var(--buy); white-space: nowrap; } 
         .p-sell { color: var(--sell); white-space: nowrap; } 
-        .fx-val { color: var(--usd); font-weight: 800; font-size: 1.1rem; min-width: 50px; }
-        .p-label { font-size: 0.65rem; color: #888; font-weight: normal; margin-right: 2px; }
+        .fx-val { color: var(--usd); font-weight: 800; font-size: 1rem; }
+        .p-label { font-size: 0.6rem; color: #888; margin-right: 2px; }
         
-        .status-bar { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #666; }
-        select { background: #111; border: 1px solid #333; color: var(--gold); border-radius: 4px; font-size: 0.75rem; padding: 2px; }
+        .status-bar { display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #555; }
+        select { background: #111; border: 1px solid #333; color: var(--gold); border-radius: 3px; font-size: 0.7rem; }
         
-        /* ปรับพื้นที่กราฟให้เต็มหน้าจอที่สุด */
         .chart-container { 
             flex: 1; 
-            position: relative;
-            margin: 5px;
+            margin: 2px;
             background: #000;
-            border-radius: 4px;
             overflow: hidden;
         }
         
-        .footer { text-align: center; font-size: 0.5rem; color: #333; padding: 4px 0; padding-bottom: env(safe-area-inset-bottom); }
+        .footer { text-align: center; font-size: 0.5rem; color: #222; padding: 2px 0; padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body>
 <header class="top-bar">
     <div class="brand-section">
-        <h1 class="header-title">GOLD<br>LIVE PRO</h1>
+        <h1 class="header-title">GOLD<br>PRO</h1>
         <div class="live-data-group">
             <div class="live-prices">
                 <div class="p-buy"><span class="p-label">B:</span><span id="buyPrice">7x,xxx</span></div>
@@ -77,8 +66,6 @@
             <option value="15">15s</option>
             <option value="30">30s</option>
             <option value="60" selected>60s</option>
-            <option value="90">90s</option>
-            <option value="120">120s</option>
         </select>
         <span id="updateTime">--:--:--</span>
     </div>
@@ -103,11 +90,20 @@
         "container_id": "tradingview_gold",
         "hide_side_toolbar": true,
         "allow_symbol_change": false,
-        "save_image": false
+        "details": false,
+        "hotlist": false,
+        "calendar": false,
+        // เพิ่ม MACD ตรงนี้
+        "studies": [
+            "MACD@tv-basicstudies"
+        ],
+        "show_popup_button": true,
+        "popup_width": "1000",
+        "popup_height": "650"
     });
 
-    let refreshTimer;
     const n8nBase = "https://fierily-unelated-rosamaria.ngrok-free.dev"; 
+    let refreshTimer;
 
     async function updateAll() {
         try {
@@ -118,7 +114,6 @@
             const item = Array.isArray(data) ? data[0] : data;
             
             if (item) {
-                // จัดรูปแบบตัวเลขให้มีคอมม่า (,) เพื่อให้อ่านง่ายและไม่หลุดขอบ
                 const formatNum = (num) => {
                     const clean = num.toString().replace(/[=,]/g, '');
                     return isNaN(clean) ? "---" : Number(clean).toLocaleString();
@@ -126,14 +121,12 @@
 
                 document.getElementById('buyPrice').innerText = formatNum(item.Buy);
                 document.getElementById('sellPrice').innerText = formatNum(item.Sell);
-                document.getElementById('usdThbPrice').innerText = (item.USDTHB || "--.--");
+                document.getElementById('usdThbPrice').innerText = item.USDTHB || "--.--";
                 
                 document.getElementById('updateTime').innerText = new Date().toLocaleTimeString('th-TH');
-                document.getElementById('updateTime').style.color = "#666";
             }
         } catch (e) { 
             document.getElementById('updateTime').innerText = "OFFLINE";
-            document.getElementById('updateTime').style.color = "#ff4d4d";
         }
     }
 
